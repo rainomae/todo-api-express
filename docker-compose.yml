@@ -1,0 +1,16 @@
+services:
+  a6:
+    build: .
+    container_name: a6-api
+    ports:
+      - "85:3000"
+    volumes:
+      - a6-data:/app/data
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-supersecretchangeme}
+      - PORT=3000
+      - DATA_DIR=/app/data
+    restart: unless-stopped
+
+volumes:
+  a6-data:
