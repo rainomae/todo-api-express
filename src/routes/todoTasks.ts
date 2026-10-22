@@ -31,6 +31,24 @@ router.get('/:id', (req: AuthRequest, res: Response): void => {
   res.json(toTask(row))
 })
 
+// ===== UUS LAHENDUS: üks PUT /TodoTasks/reorder kogu järjestuse kohta =====
+router.put('/reorder', (req: AuthRequest, res: Response): void => {
+  const items = req.body as unknown
+  const valid = Array.isArray(items)
+    && items.every((i) => i && typeof i.id === 'string' && Number.isInteger(i.taskSort))
+  if (!valid) { res.status(400).json({ errors: ['Body must be an array of { id, taskSort }'] }); return }
+
+  const update = db.prepare('UPDATE todo_tasks SET task_sort = ? WHERE id = ? AND app_user_id = ?')
+  const applyAll = db.transaction((rows: { id: string; taskSort: number }[]) => {
+    let updated = 0
+    for (const r of rows) updated += update.run(r.taskSort, r.id, req.userId).changes
+    return updated
+  })
+
+  res.json({ updated: applyAll(items as { id: string; taskSort: number }[]) })
+})
+// ===== UUS LAHENDUS LÕPP =====
+
 router.post('/', (req: AuthRequest, res: Response): void => {
   const {
     taskName,
